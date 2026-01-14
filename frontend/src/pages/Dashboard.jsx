@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
 const Dashboard = () => {
-  // --- ESTADOS ---
   const [reservas, setReservas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -10,7 +9,7 @@ const Dashboard = () => {
   const hoyStr = new Date().toISOString().split('T')[0];
   const [fechaFiltro, setFechaFiltro] = useState(hoyStr);
 
-  // Recuperamos el usuario de BistroMind para los permisos
+  const API_URL = "https://bistromind.onrender.com/api/reservas";
   const usuarioActivo = JSON.parse(localStorage.getItem('user_bistro'));
 
   const [nuevaReserva, setNuevaReserva] = useState({
@@ -20,20 +19,19 @@ const Dashboard = () => {
 
   const listaMesas = [...Array.from({ length: 18 }, (_, i) => `Mesa ${i + 1}`), "Achiote 1", "Achiote 2", "Galería", "Guacamaya"];
 
-  // --- EFECTOS Y DATOS ---
   useEffect(() => { obtenerDatos(); }, []);
 
   const obtenerDatos = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/reservas');
+      const res = await fetch(API_URL);
       const data = await res.json();
       setReservas(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("Error:", e); }
+    } catch (e) { console.error("Error conectando a Render:", e); }
   };
 
   const manejarGuardar = async (e) => {
     e.preventDefault();
-    const url = editandoId ? `http://localhost:5000/api/reservas/${editandoId}` : 'http://localhost:5000/api/reservas';
+    const url = editandoId ? `${API_URL}/${editandoId}` : API_URL;
     try {
       const response = await fetch(url, {
         method: editandoId ? 'PUT' : 'POST',
@@ -41,24 +39,24 @@ const Dashboard = () => {
         body: JSON.stringify(nuevaReserva)
       });
       if (response.ok) { cerrarModal(); obtenerDatos(); }
-    } catch (error) { alert("Error de conexión"); }
+    } catch (error) { alert("Error al conectar con el servidor de Render"); }
   };
 
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/reservas/${id}`, {
+      await fetch(`${API_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: nuevoEstado })
       });
-      if (res.ok) { setReservas(prev => prev.map(r => r.id === id ? { ...r, estado: nuevoEstado } : r)); }
+      setReservas(prev => prev.map(r => r.id === id ? { ...r, estado: nuevoEstado } : r));
     } catch (e) { console.error(e); }
   };
 
   const eliminarReserva = async (id) => {
-    if (!usuarioActivo?.puedeEliminar) return alert("Acceso denegado: Tu perfil no permite eliminar.");
+    if (!usuarioActivo?.puedeEliminar) return alert("No tienes permiso para eliminar.");
     if (window.confirm("¿Eliminar reserva?")) {
-      await fetch(`http://localhost:5000/api/reservas/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
       obtenerDatos();
     }
   };
@@ -66,7 +64,6 @@ const Dashboard = () => {
   const abrirEditar = (res) => { setEditandoId(res.id); setNuevaReserva({ ...res }); setMostrarModal(true); };
   const cerrarModal = () => { setMostrarModal(false); setEditandoId(null); setNuevaReserva({ nombre_cliente: '', num_personas: '', fecha: hoyStr, hora: '12:00', notas: '', creado_por: usuarioActivo?.nombre || '', telefono: '', mesa: '', estado: 'Pendiente' }); };
 
-  // --- FILTRADO ---
   const filtradas = reservas.filter(r => 
     r.fecha === fechaFiltro && 
     r.estado === filtroEstado && 
@@ -77,10 +74,10 @@ const Dashboard = () => {
     <div className="p-10 text-white animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-10">
         <div className="flex items-center gap-4">
-          <h2 className="text-4xl font-black italic tracking-tighter uppercase">BistroMind</h2>
+          <h2 className="text-4xl font-black italic tracking-tighter uppercase text-[#00b4d8]">BistroMind</h2>
           <input type="date" value={fechaFiltro} onChange={e => setFechaFiltro(e.target.value)} className="bg-[#1b262f] p-2 rounded-xl text-[#00b4d8] font-black border border-white/5 outline-none" />
         </div>
-        <button onClick={() => setMostrarModal(true)} className="bg-[#00b4d8] px-8 py-4 rounded-2xl font-black shadow-lg uppercase text-sm hover:scale-105 transition-all">+ Nueva Reserva</button>
+        <button onClick={() => setMostrarModal(true)} className="bg-[#00b4d8] px-8 py-4 rounded-2xl font-black shadow-lg uppercase text-sm hover:scale-105 transition-all text-black">+ Nueva Reserva</button>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -114,7 +111,7 @@ const Dashboard = () => {
                     <option value="Pendiente">Pendiente</option><option value="Llego">Llego</option><option value="No llego">No llego</option><option value="Cancelo">Cancelo</option>
                   </select>
                 </td>
-                <td className="p-6">
+                <td className="p-6 text-center">
                   <div className="flex justify-center gap-2">
                     <button onClick={() => abrirEditar(res)} className="p-3 bg-blue-500/10 text-blue-500 rounded-xl">✏️</button>
                     <button onClick={() => eliminarReserva(res.id)} className={`p-3 rounded-xl transition-all ${usuarioActivo?.puedeEliminar ? 'bg-red-500/10 text-red-500' : 'opacity-10 grayscale cursor-not-allowed'}`}>🗑️</button>
@@ -126,10 +123,9 @@ const Dashboard = () => {
         </table>
       </div>
 
-      {/* MODAL SIMPLIFICADO */}
       {mostrarModal && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1b262f] w-full max-w-lg rounded-[3rem] p-10 border border-white/10">
+          <div className="bg-[#1b262f] w-full max-w-lg rounded-[3rem] p-10 border border-white/10 shadow-2xl">
             <h2 className="text-2xl font-black mb-8 text-center text-[#00b4d8] uppercase italic">{editandoId ? 'Editar' : 'Nueva'} Reserva</h2>
             <form onSubmit={manejarGuardar} className="space-y-4">
               <input required placeholder="Cliente" className="w-full bg-[#0a0f14] p-5 rounded-2xl border border-white/5 outline-none" value={nuevaReserva.nombre_cliente} onChange={e => setNuevaReserva({...nuevaReserva, nombre_cliente: e.target.value})} />
@@ -138,14 +134,14 @@ const Dashboard = () => {
                 <input placeholder="Teléfono" className="bg-[#0a0f14] p-5 rounded-2xl border border-white/5" value={nuevaReserva.telefono} onChange={e => setNuevaReserva({...nuevaReserva, telefono: e.target.value})} />
               </div>
               <select required className="w-full bg-[#0a0f14] p-5 rounded-2xl border border-white/5 text-[#00b4d8] font-bold" value={nuevaReserva.mesa} onChange={e => setNuevaReserva({...nuevaReserva, mesa: e.target.value})}>
-                <option value="">Mesa...</option>{listaMesas.map(m => <option key={m} value={m}>{m}</option>)}
+                <option value="">Seleccionar Mesa...</option>{listaMesas.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
               <div className="grid grid-cols-2 gap-4">
                 <input required type="date" className="bg-[#0a0f14] p-5 rounded-2xl border border-white/5" value={nuevaReserva.fecha} onChange={e => setNuevaReserva({...nuevaReserva, fecha: e.target.value})} />
                 <input required type="time" className="bg-[#0a0f14] p-5 rounded-2xl border border-white/5" value={nuevaReserva.hora} onChange={e => setNuevaReserva({...nuevaReserva, hora: e.target.value})} />
               </div>
-              <button type="submit" className="w-full bg-[#00b4d8] p-5 rounded-2xl font-black uppercase text-white">{editandoId ? 'Guardar' : 'Confirmar'}</button>
-              <button type="button" onClick={cerrarModal} className="w-full text-gray-500 uppercase font-black text-[10px]">Cancelar</button>
+              <button type="submit" className="w-full bg-[#00b4d8] p-5 rounded-2xl font-black uppercase text-black hover:scale-105 transition-all">{editandoId ? 'Guardar Cambios' : 'Confirmar Reserva'}</button>
+              <button type="button" onClick={cerrarModal} className="w-full text-gray-500 uppercase font-black text-[10px] mt-2">Cancelar</button>
             </form>
           </div>
         </div>
