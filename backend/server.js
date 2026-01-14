@@ -1,13 +1,20 @@
-import 'dotenv/config'; // Carga las variables del archivo .env
+import 'dotenv/config'; 
 import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
 
 const app = express();
-app.use(cors());
+
+// CORRECCIÓN DE CORS: Esto permite que Vercel y tu celular se conecten sin errores
+app.use(cors({
+  origin: '*', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
-// CONFIGURACIÓN DE SUPABASE (Usando variables de entorno para seguridad)
+// CONFIGURACIÓN DE SUPABASE
 const supabaseUrl = process.env.SUPABASE_URL || 'https://lyofalqibzkqjrvlliwd.supabase.co'; 
 const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5b2ZhbHFpYnprcWpydmxsaXdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNzU5ODgsImV4cCI6MjA4Mzg1MTk4OH0.AfZhiwDVr7bJM-dm1DOUnGFfOarCLAAxyRZk9LYGPqg'; 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -95,7 +102,7 @@ app.delete('/api/reservas/:id', async (req, res) => {
   }
 });
 
-// --- CLIENTES Y ESTADÍSTICAS (MAPA DE CALOR) ---
+// --- CLIENTES Y ESTADÍSTICAS ---
 
 app.get('/api/clientes', async (req, res) => {
   try {
@@ -136,15 +143,8 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-// --- INICIO DEL MOTOR BISTROMIND ---
-// process.env.PORT es vital para Render
+// --- INICIO DEL SERVIDOR ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`
-  🧠 BISTROMIND ENGINE - ONLINE
-  -------------------------------------
-  Puerto: ${PORT}
-  Seguridad: .env config activa
-  -------------------------------------
-  `);
+  console.log(`🧠 BISTROMIND ENGINE ONLINE EN PUERTO ${PORT}`);
 });
