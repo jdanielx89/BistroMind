@@ -26,14 +26,23 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#0f171e] flex items-center justify-center text-white">
-      <div className="bg-[#1b262f] p-12 rounded-[3rem] border border-white/5 shadow-2xl w-full max-w-md text-center">
-        <h1 className="text-4xl font-black italic text-[#00b4d8] mb-1 uppercase tracking-tighter">BistroMind</h1>
-        <p className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-10">Intelligent Management</p>
+    <div className="h-screen w-screen bg-[#0f171e] flex items-center justify-center p-4">
+      <div className="bg-[#1b262f] p-8 md:p-12 rounded-[2.5rem] md:rounded-[3rem] border border-white/5 shadow-2xl w-full max-w-md text-center">
+        <h1 className="text-4xl md:text-5xl font-black italic text-[#00b4d8] mb-1 uppercase tracking-tighter">BistroMind</h1>
+        <p className="text-gray-500 text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-10">Inteligencia para Restaurantes</p>
+        
         <form onSubmit={manejarLogin} className="space-y-6">
-          <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="PIN" className={`w-full bg-black/40 border ${error ? 'border-red-500' : 'border-white/10'} p-6 rounded-2xl text-center text-2xl tracking-[1em] outline-none focus:border-[#00b4d8] transition-all`} maxLength={4} />
-          <button type="submit" className="w-full bg-[#00b4d8] text-black font-black p-5 rounded-2xl uppercase tracking-widest hover:scale-105 transition-all">Entrar</button>
+          <input 
+            type="password" 
+            placeholder="INGRESA TU PIN" 
+            maxLength={4}
+            className={`w-full bg-black/40 p-5 rounded-2xl border-2 text-center text-3xl font-black tracking-[1em] outline-none transition-all ${error ? 'border-red-500 animate-shake' : 'border-white/5 focus:border-[#00b4d8]'}`}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+          />
+          <button type="submit" className="w-full bg-[#00b4d8] p-5 rounded-2xl text-black font-black uppercase italic hover:scale-105 transition-all shadow-lg">Acceder</button>
         </form>
+        {error && <p className="text-red-500 text-[10px] font-black uppercase mt-4 animate-pulse">PIN INCORRECTO</p>}
       </div>
     </div>
   );
