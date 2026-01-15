@@ -114,6 +114,26 @@ app.get('/api/clientes', async (req, res) => {
   }
 });
 
+// NUEVA RUTA: Obtener historial detallado de un cliente por su teléfono
+app.get('/api/clientes/:telefono/historial', async (req, res) => {
+  try {
+    const { telefono } = req.params;
+    // Aplicamos la misma lógica de limpieza que usas al crear reservas
+    const telBusqueda = telefono.toString().replace(/\D/g, ''); 
+
+    const { data, error } = await supabase
+      .from('reservas')
+      .select('*')
+      .eq('telefono', telBusqueda)
+      .order('fecha', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/stats', async (req, res) => {
   try {
     const { data, error } = await supabase.from('reservas').select('fecha, num_personas, estado, mesa, hora');
